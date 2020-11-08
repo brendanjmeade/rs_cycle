@@ -9,7 +9,7 @@ end
 
 
 function sliplaw(v, theta, dc)
-    return -v * theta / dc * log(v * theta / dc)
+    return -v * theta / dc * log(v * θ / dc)
 end
 
 
@@ -36,10 +36,9 @@ end
 function calcdvθveldep!(du, u, p, t)
     η, σn, b, μ, vp, L, ρ, Va, a0, Sa, Vdc, dc0, Sdc, statelaw = p
     θ = u[1]
-    v = abs(u[2])
+    v = u[2]
     a = aofv(v, Va, a0, Sa)
     dc = dcofv(v, Vdc, dc0, Sdc)
-
     du[1] = statelaw(v, θ, dc)
     du[2] = 1 / (η / σn + a / v) * (μ * (vp - v) / (L * σn) - b * du[1] / θ)
     return nothing
@@ -83,6 +82,7 @@ function sliding()
     close("all")
     siay = 365.25 * 24 * 60 * 60
     tspan = (0.0, siay * 1000.0) # This will run
+    # tspan = (0.0, siay * 302.0) # This will run but fail for the a, b case    
     μ = 3e10
     ν = 0.25
     ρ = 2700.0
@@ -106,8 +106,9 @@ function sliding()
     pclassic = (dc, η, σn, a, b, μ, vp, L, ρ, aginglaw)
     probclassic = ODEProblem(calcdvθclassic!, icsclassic, tspan, pclassic)
     solclassic = solve(probclassic, RK4(), abstol = abstol, reltol = reltol)
+    # solclassic = solve(probclassic, RK4(), abstol = abstol, reltol = reltol)
     plottimeseries(solclassic, siay, "RSF (classic)")
-    
+
     # Time integrate - a, dc evolved with v
     # Values and form from Im et al. 2020
     Va = 100e-6
@@ -116,14 +117,6 @@ function sliding()
     Vdc = 100e-6
     dc0 = 10e-6
     Sdc = 30e-6
-
-    # Va = 100e-6
-    # a0 = a
-    # Sa = 0.0003 / (10 * siay)
-    # Vdc = 100e-6
-    # dc0 = dc
-    # Sdc = 30e-6
-
     
     icsveldep = [1e8 ; vp / 1000]
     pveldep = (η, σn, b, μ, vp, L, ρ, Va, a0, Sa, Vdc, dc0, Sdc, aginglaw)
